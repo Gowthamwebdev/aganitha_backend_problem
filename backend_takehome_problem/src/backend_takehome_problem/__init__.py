@@ -4,4 +4,4 @@ Backend Takehome Problem Package
 """
 
 # Optional: Import functions to make them available at package level
-from .fetch_pubmed import fetch_papers, fetch_paper_details
+from .fetch_pubmed import fetch_papers

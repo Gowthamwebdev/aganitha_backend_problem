@@ -1,7 +1,7 @@
 import pandas as pd
 
-def save_to_csv(data, filename="papers.csv"):
-    """Save fetched papers to a CSV file."""
-    df = pd.DataFrame(data)
+def save_to_csv(papers, filename):
+    """Save filtered papers to a CSV file."""
+    df = pd.DataFrame(papers)
     df.to_csv(filename, index=False)
-    print(f"Saved to {filename}")
+    print(f"📁 Data saved to {filename}")

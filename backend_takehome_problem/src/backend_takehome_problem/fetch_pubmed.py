@@ -1,59 +1,60 @@
 import requests
-import pandas as pd
-import argparse
+import xml.etree.ElementTree as ET
+import re
 
-BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+def fetch_papers(query):
+    """Fetch research papers from PubMed and extract relevant details."""
+    try:
+        search_url = f"{BASE_URL}esearch.fcgi?db=pubmed&term={query}&retmode=json&retmax=50"
+        response = requests.get(search_url)
+        response.raise_for_status()
+        data = response.json()
+        paper_ids = data.get("esearchresult", {}).get("idlist", [])
 
-import requests
-import urllib.parse  # Needed for encoding complex queries
+        if not paper_ids:
+            print(f"⚠️ No papers found: {query}")
+            return []
 
-BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
-DETAILS_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+        fetch_url = f"{BASE_URL}efetch.fcgi?db=pubmed&id={','.join(paper_ids)}&retmode=xml"
+        response = requests.get(fetch_url)
+        response.raise_for_status()
+        root = ET.fromstring(response.text)
 
-def fetch_papers(query: str):
-    """Fetch papers from PubMed API based on a complex query."""
-    encoded_query = urllib.parse.quote_plus(query)  # Encode query properly
+        papers = []
+        for article in root.findall(".//PubmedArticle"):
+            paper_id = article.findtext(".//PMID", "N/A")
+            title = article.findtext(".//ArticleTitle", "N/A")
+            
+            pub_date_node = article.find(".//PubDate")
+            if pub_date_node is not None:
+                year = pub_date_node.findtext("Year", "N/A")
+                month = pub_date_node.findtext("Month", "")
+                day = pub_date_node.findtext("Day", "")
+                publication_date = f"{year}-{month}-{day}".strip("-")
+            else:
+                publication_date = "N/A"
+            
+            affiliations = []
+            emails = []
+            for aff in article.findall(".//AffiliationInfo/Affiliation"):
+                text = aff.text or ""
+                affiliations.append(text)
+                match = re.search(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text)
+                if match:
+                    emails.append(match.group())
 
-    params = {
-        "db": "pubmed",
-        "term": encoded_query,  # Pass encoded query
-        "retmode": "json",
-        "retmax": 50
-    }
-    
-    response = requests.get(BASE_URL, params=params)
-    
-    if response.status_code != 200:
-        raise Exception(f"API request failed: {response.status_code}")
-    
-    data = response.json()
-    return data.get("esearchresult", {}).get("idlist", [])
+            papers.append({
+                "PubmedID": paper_id,
+                "Title": title,
+                "Publication Date": publication_date,
+                "Affiliations": "; ".join(affiliations) if affiliations else "N/A",
+                "Corresponding Author Email": "; ".join(emails) if emails else "N/A"
+            })
 
-def fetch_paper_details(paper_ids):
-    """Fetch detailed metadata for given paper IDs."""
-    if not paper_ids:
+        print(f"✅ Successfully fetched {len(papers)} papers.")
+        return papers
+
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Error fetching papers: {e}")
         return []
-    
-    params = {
-        "db": "pubmed",
-        "id": ",".join(paper_ids),
-        "retmode": "json"
-    }
-    response = requests.get(DETAILS_URL, params=params)
-    
-    if response.status_code != 200:
-        raise Exception("Failed to fetch details")
-    
-    data = response.json()
-    result = []
-    
-    for paper_id in paper_ids:
-        paper_data = data["result"].get(paper_id, {})
-        result.append({
-            "PubmedID": paper_id,
-            "Title": paper_data.get("title", "N/A"),
-            "Publication Date": paper_data.get("pubdate", "N/A"),
-        })
-    
-    return result
-
