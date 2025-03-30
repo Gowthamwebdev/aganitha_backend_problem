@@ -10,8 +10,8 @@ from backend_takehome_problem.utils import save_to_csv
 from backend_takehome_problem.paper_filteration import filter_papers 
 
 def main():
-    parser = argparse.ArgumentParser(description="Fetch research papers from PubMed based on a query.")
-    parser.add_argument("query", type=str, help="Search query for PubMed")
+    parser = argparse.ArgumentParser(description="Fetch and filter research papers from PubMed.")
+    parser.add_argument("query", nargs="+", help="Search query (use quotes for multi-word queries)")
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode to print additional information")
     parser.add_argument("-f", "--file", type=str, help="Specify filename to save results. If not provided, output will be printed to console")
     args = parser.parse_args()

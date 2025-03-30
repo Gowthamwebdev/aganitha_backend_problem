@@ -37,6 +37,8 @@ def fetch_papers(query):
             
             affiliations = []
             emails = []
+            non_academic_authors = []
+            company_affiliations = []
             for aff in article.findall(".//AffiliationInfo/Affiliation"):
                 text = aff.text or ""
                 affiliations.append(text)
@@ -44,13 +46,41 @@ def fetch_papers(query):
                 if match:
                     emails.append(match.group())
 
+                if any(keyword in text.lower() for keyword in ["inc", "ltd", "gmbh", "llc", "corp", "biotech", "pharma", "company", "corporation"]):
+                    company_affiliations.append(text)
+                else:
+                    non_academic_authors.append(text)
+            
+            authors = []
+            for author in article.findall(".//AuthorList/Author"):
+                last_name = author.findtext("LastName", "").strip()
+                fore_name = author.findtext("ForeName", "").strip()
+                initials = author.findtext("Initials", "").strip()
+                
+                if last_name and fore_name:
+                    full_name = f"{fore_name} {last_name}"
+                elif last_name and initials:
+                    full_name = f"{initials} {last_name}"
+                else:
+                    full_name = last_name or "N/A"
+                
+                authors.append(full_name)
+
+            authors_str = "; ".join(authors) if authors else "N/A"
+
+
+            # Modify the papers.append() section to include:
             papers.append({
                 "PubmedID": paper_id,
                 "Title": title,
                 "Publication Date": publication_date,
-                "Affiliations": "; ".join(affiliations) if affiliations else "N/A",
+                "Authors": authors_str,
+                "All Affiliations": "; ".join(affiliations) if affiliations else "N/A",
+                "Company Affiliations": "; ".join(company_affiliations) if company_affiliations else "N/A",
+                "Non-academic Authors": "; ".join(non_academic_authors) if non_academic_authors else "N/A",
                 "Corresponding Author Email": "; ".join(emails) if emails else "N/A"
             })
+
 
         print(f"✅ Successfully fetched {len(papers)} papers.")
         return papers
