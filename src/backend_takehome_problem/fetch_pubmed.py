@@ -1,8 +1,16 @@
 import requests
 import xml.etree.ElementTree as ET
 import re
+import os
+from dotenv import load_dotenv
 
-BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+load_dotenv()
+
+BASE_URL = os.getenv("BASE_URL")
+
+if not BASE_URL:
+    raise ValueError("❌ BASE_URL is not set in the .env file! try using sample.env")
+
 def fetch_papers(query):
     """Fetch research papers from PubMed and extract relevant details."""
     try:
