@@ -7,18 +7,20 @@ This project is a command-line tool that fetches research papers from PubMed bas
 ## Project Structure
 
 ```
-backend_takehome_problem/
-│-- fetch_pubmed.py       # Fetch papers from PubMed API
-│-- paper_filteration.py  # Filters out non-academic papers
-│-- utils.py              # Utility functions (saving CSV, etc.)
-│-- main.py               # Main script to run the program
-│-- __init__.py           # Package initialization
-│
 src/
-│-- backend_takehome_problem/  # Source directory for the package
+│-- backend_takehome_problem/
+│   │-- __init__.py           # Package initialization
+│   │-- fetch_pubmed.py       # Fetch papers from PubMed API
+│   │-- paper_filteration.py  # Filters papers based on affiliations
+│   │-- utils.py              # Utility functions (saving CSV, etc.)
+│-- main.py               # Main script to run the CLI program
 │
-README.md                 # Project documentation
-pyproject.toml            # Dependency management using Poetry
+tests/                        # Unit tests for the project
+.env                           # Environment file for storing API keys
+output.csv                     # Example output file
+pyproject.toml                 # Dependency management using Poetry
+poetry.lock                     # Poetry lock file
+README.md                      # Project documentation
 ```
 
 ## Installation
